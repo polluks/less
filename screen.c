@@ -836,10 +836,10 @@ scrsize(VOID_PARAM)
 #endif
 #endif
 
-	if ((s = lgetenv("LINES")) != NULL)
-		sc_height = atoi(s);
-	else if (sys_height > 0)
+	if (sys_height > 0)
 		sc_height = sys_height;
+	else if ((s = lgetenv("LINES")) != NULL)
+		sc_height = atoi(s);
 #if !MSDOS_COMPILER
 	else if ((n = ltgetnum("li")) > 0)
 		sc_height = n;
@@ -847,10 +847,10 @@ scrsize(VOID_PARAM)
 	if (sc_height <= 0)
 		sc_height = DEF_SC_HEIGHT;
 
-	if ((s = lgetenv("COLUMNS")) != NULL)
-		sc_width = atoi(s);
-	else if (sys_width > 0)
+	if (sys_width > 0)
 		sc_width = sys_width;
+	else if ((s = lgetenv("COLUMNS")) != NULL)
+		sc_width = atoi(s);
 #if !MSDOS_COMPILER
 	else if ((n = ltgetnum("co")) > 0)
 		sc_width = n;
@@ -1666,8 +1666,6 @@ ltputs(str, affcnt, f_putc)
 	public void
 init_mouse(VOID_PARAM)
 {
-	if (!mousecap)
-		return;
 #if !MSDOS_COMPILER
 	ltputs(sc_s_mousecap, sc_height, putchr);
 #else
@@ -1686,8 +1684,6 @@ init_mouse(VOID_PARAM)
 	public void
 deinit_mouse(VOID_PARAM)
 {
-	if (!mousecap)
-		return;
 #if !MSDOS_COMPILER
 	ltputs(sc_e_mousecap, sc_height, putchr);
 #else
@@ -1704,6 +1700,7 @@ deinit_mouse(VOID_PARAM)
 	public void
 init(VOID_PARAM)
 {
+	clear_bot_if_needed();
 #if !MSDOS_COMPILER
 	if (!(quit_if_one_screen && one_screen))
 	{
@@ -1711,7 +1708,8 @@ init(VOID_PARAM)
 			ltputs(sc_init, sc_height, putchr);
 		if (!no_keypad)
 			ltputs(sc_s_keypad, sc_height, putchr);
-		init_mouse();
+		if (mousecap)
+			init_mouse();
 	}
 	init_done = 1;
 	if (top_scroll) 
@@ -1734,7 +1732,8 @@ init(VOID_PARAM)
 	{
 		if (!no_init)
 			win32_init_term();
-		init_mouse();
+		if (mousecap)
+			init_mouse();
 
 	}
 	win32_init_vt_term();
@@ -1756,7 +1755,8 @@ deinit(VOID_PARAM)
 #if !MSDOS_COMPILER
 	if (!(quit_if_one_screen && one_screen))
 	{
-		deinit_mouse();
+		if (mousecap)
+			deinit_mouse();
 		if (!no_keypad)
 			ltputs(sc_e_keypad, sc_height, putchr);
 		if (!no_init)
@@ -1769,7 +1769,8 @@ deinit(VOID_PARAM)
 	win32_deinit_vt_term();
 	if (!(quit_if_one_screen && one_screen))
 	{
-		deinit_mouse();
+		if (mousecap)
+			deinit_mouse();
 		if (!no_init)
 			win32_deinit_term();
 	}

@@ -56,6 +56,7 @@ public int linenum_width;       /* Width of line numbers */
 public int status_col_width;    /* Width of status column */
 public int incr_search;         /* Incremental search */
 public int use_color;           /* Use UI color */
+public int want_filesize;       /* */
 #if HILITE_SEARCH
 public int hilite_search;       /* Highlight matched search patterns? */
 #endif
@@ -130,6 +131,7 @@ static struct optname linenum_width_optname = { "line-num-width", NULL };
 static struct optname status_col_width_optname = { "status-col-width", NULL };
 static struct optname incr_search_optname = { "incsearch",       NULL };
 static struct optname use_color_optname = { "use-color",         NULL };
+static struct optname want_filesize_optname = { "file-size",     NULL };
 #if LESSTEST
 static struct optname ttyin_name_optname = { "tty",              NULL };
 static struct optname rstat_optname  = { "rstat",                NULL };
@@ -339,8 +341,8 @@ static struct loption option[] =
 		TRIPLE|REPAINT, OPT_OFF, &ctldisp, NULL,
 		{
 			"Display control characters as ^X",
-			"Display control characters directly",
-			"Display control characters directly, processing ANSI sequences"
+			"Display control characters directly (not recommended)",
+			"Display ANSI sequences directly, other control characters as ^X"
 		}
 	},
 	{ 's', &s_optname,
@@ -542,6 +544,14 @@ static struct loption option[] =
 		{
 			"Don't use color",
 			"Use color",
+			NULL
+		}
+	},
+	{ OLETTER_NONE, &want_filesize_optname,
+		BOOL|REPAINT, OPT_OFF, &want_filesize, opt_filesize,
+		{
+			"Don't get size of each file",
+			"Get size of each file",
 			NULL
 		}
 	},
