@@ -1,4 +1,11 @@
-/*@@copyright@@*/
+/*
+ * Copyright (C) 1984-2021  Mark Nudelman
+ *
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
+ *
+ * For more information, see the README file.
+ */
 
 
 /*
@@ -784,6 +791,7 @@ prompt(VOID_PARAM)
 	    entire_file_displayed() && !(ch_getflags() & CH_HELPFILE) && 
 	    next_ifile(curr_ifile) == NULL_IFILE)
 		quit(QUIT_OK);
+	quit_if_one_screen = FALSE; /* only get one chance at this */
 
 #if MSDOS_COMPILER==WIN32C
 	/* 

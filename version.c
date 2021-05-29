@@ -1,4 +1,11 @@
-/*@@copyright@@*/
+/*
+ * Copyright (C) 1984-2021  Mark Nudelman
+ *
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
+ *
+ * For more information, see the README file.
+ */
 
 
 /*
@@ -918,7 +925,11 @@ v583  4/21/21   Use XDG_CONFIG_HOME and XDG_DATA_HOME to find files.
 v584  4/30/21   Add --file-size option.
 v585  5/2/21    Allow color desc W per man page.
 v586  5/7/21    Doc changes.
-v587            Fix --with-secure; fix --file-size message on Windows; fix memcpy usage.
+v587  5/27/21   Fix --with-secure; fix --file-size message on Windows; 
+                fix colored search hilite in colored text; don't exit
+                if -F and screen is resized; fix memcpy usage.
+v588  5/27/21   Fix release.
+v589  5/29/21   Copyright & build changes.
 */
 
-char version[] = "587x";
+char version[] = "589";

@@ -1,4 +1,11 @@
-/*@@copyright@@*/
+/*
+ * Copyright (C) 1984-2021  Mark Nudelman
+ *
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
+ *
+ * For more information, see the README file.
+ */
 
 #define NEWBOT 1
 
@@ -564,6 +571,7 @@ struct loption;
 struct hilite_tree;
 struct ansi_state;
 #include "pattern.h"
+#include "xbuf.h"
 #include "funcs.h"
 
 /* Functions not included in funcs.h */
