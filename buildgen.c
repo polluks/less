@@ -1,6 +1,20 @@
 #include <stdio.h>
 #include <string.h>
 
+static char *skip_over(char *s, const char *skip)
+{
+	while (*s != '\0' && strchr(skip, *s) != NULL)
+		++s;
+	return s;
+}
+
+static char *skip_to(char *s, const char *skip)
+{
+	while (*s != '\0' && strchr(skip, *s) == NULL)
+		++s;
+	return s;
+}
+
 int main(int argc, char **argv)
 {
 	char *p, buf[1024];  /* enough for the longest prototype at funcs.h */
@@ -28,9 +42,27 @@ int main(int argc, char **argv)
 		puts("constant int size_helpdata = sizeof(helpdata) - 1;");
 	}
 
+	if (argc == 2 && !strcmp(argv[1], "lessmsg"))
+	{
+		for (cmd = 1; fgets(buf, sizeof buf, stdin); ok = 1)
+		{
+			char *msg;
+			char *sym = skip_over(buf, " ");
+			if (*sym == '\0' || *sym == '\n' || *sym == '\r' || *sym == '#')
+				continue;
+			p = skip_to(sym, " \r\n");
+			if (*p != '\0')
+				*p++= '\0';
+			msg = skip_over(p, " ");
+			p = skip_to(msg, "\r\n");
+			*p = '\0';
+			printf("M(%s,\"%s\")\n", sym, msg);
+		}
+	}
+
 	if (cmd && ok)
 		return 0;
-	fprintf(stderr, !cmd ? "stdin -> stdout: %s MODE  (funcs or help)\n"
+	fprintf(stderr, !cmd ? "stdin -> stdout: %s MODE  (funcs or help or lessmsg)\n"
 	                     : "%s: error: empty input\n", *argv);
 	return 1;
 }

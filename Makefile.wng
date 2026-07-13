@@ -111,7 +111,7 @@ LIBS += ${XLDLIBS}
 
 LESS_SRC = brac.c ch.c charset.c cmdbuf.c command.c		\
            cvt.c decode.c edit.c evar.c filename.c forwback.c 		\
-           ifile.c input.c jump.c line.c linenum.c 		\
+           ifile.c input.c jump.c line.c linenum.c lmsg.c 		\
            lsystem.c main.c mark.c optfunc.c option.c 		\
 	   opttbl.c os.c output.c pattern.c position.c 		\
 	   prompt.c          screen.c scrsize.c search.c 	\
@@ -119,11 +119,14 @@ LESS_SRC = brac.c ch.c charset.c cmdbuf.c command.c		\
 ifeq  (${REGEX_PACKAGE},regcomp-local)
 LESS_SRC += regexp.c
 endif
+ifneq (${SECURE_COMPILE},1)
+LESS_SRC += lesskey_parse.c
+endif
 
 OBJ = \
 	main.o screen.o brac.o ch.o charset.o cmdbuf.o \
 	command.o cvt.o decode.o edit.o evar.o filename.o forwback.o \
-	help.o ifile.o input.o jump.o line.o linenum.o \
+	help.o ifile.o input.o jump.o line.o linenum.o lmsg.o \
 	lsystem.o mark.o optfunc.o option.o opttbl.o os.o \
 	output.o pattern.o position.o prompt.o search.o signal.o \
 	tags.o ttyin.o version.o xbuf.o
@@ -154,9 +157,11 @@ ifeq  (${WINGEN},1)
     BUILDGEN = buildgen.exe
     MKHELP = buildgen.exe help
     MKFUNCS = type 2>NUL ${LESS_SRC} | buildgen.exe funcs
+    MKLESSMSG = type lessmsg lessmsg_int 2>NUL | buildgen.exe lessmsg
 else
     MKHELP = (perl mkhelp.pl || sh mkhelp.sh)
     MKFUNCS = grep -h "^public [^;]*$$" ${LESS_SRC} | sed "s/$$/;/"
+    MKLESSMSG = sed -e "/^ *\#/d" -e "/^ *$$/d" -e "s/^ *\([^ ]*\)  *\(.*\)/M(\1,\"\2\")/" lessmsg lessmsg_int
 endif
 
 funcs.h: ${LESS_SRC} ${BUILDGEN}
@@ -167,10 +172,13 @@ funcs.h: ${LESS_SRC} ${BUILDGEN}
 help.c: less.hlp ${BUILDGEN}
 	${MKHELP}  < less.hlp > $@
 
+lessmsg.inc: lessmsg lessmsg_int ${BUILDGEN}
+	${MKLESSMSG} > $@
+
 buildgen.exe: buildgen.c
 	${CC} $< -o $@
 
-${OBJ}: less.h defines.h funcs.h
+$(OBJ): less.h funcs.h defines.h lang.h lmsg.h lessmsg.inc pattern.h xbuf.h
 
 TAGS:
 	etags *.c *.h

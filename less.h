@@ -80,6 +80,7 @@
 #define muldiv(val,num,den) umuldiv((uintmax)(val), (uintmax)(num), (uintmax)(den))
 
 #include "lang.h"
+#include "lmsg.h"
 
 #if defined UINTMAX_MAX
 typedef uintmax_t uintmax;
@@ -682,6 +683,7 @@ struct mlist;
 struct loption;
 struct hilite_tree;
 struct ansi_state;
+struct lesskey_tables;
 #include "pattern.h"
 #include "xbuf.h"
 #include "funcs.h"
