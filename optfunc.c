@@ -334,6 +334,7 @@ public void opt_kc(int type, constant char *s)
  */
 public void opt__S(int type, constant char *s)
 {
+	(void)s;
 	switch (type)
 	{
 	case TOGGLE:
@@ -550,6 +551,7 @@ public void opt_autosave(int type, constant char *s)
 	/*ARGSUSED*/
 public void opt_b(int type, constant char *s)
 {
+	(void)s;
 	switch (type)
 	{
 	case INIT:
@@ -570,6 +572,7 @@ public void opt_b(int type, constant char *s)
 	/*ARGSUSED*/
 public void opt_i(int type, constant char *s)
 {
+	(void)s;
 	switch (type)
 	{
 	case TOGGLE:
@@ -587,6 +590,7 @@ public void opt_i(int type, constant char *s)
 	/*ARGSUSED*/
 public void opt__V(int type, constant char *s)
 {
+	(void)s;
 	switch (type)
 	{
 	case TOGGLE:
@@ -913,6 +917,7 @@ public void opt_rscroll(int type, constant char *s)
 	/*ARGSUSED*/
 public void opt_query(int type, constant char *s)
 {
+	(void)s;
 	switch (type)
 	{
 	case QUERY:
@@ -1026,23 +1031,32 @@ public void opt_emouse(int type, constant char *s)
 	/*ARGSUSED*/
 public void opt_mouse(int type, constant char *s)
 {
+	(void)s;
 	switch (type)
 	{
 	case INIT:
 	case TOGGLE:
-		switch (xmouse)
+		if (emouse == 0)
 		{
-		case OPT_OFF:
-			opt_emouse(type, "-");
-			break;
-		case OPT_ON:
-		case OPT_ONPLUS:
 			opt_emouse(type, "vmove,click");
 			mouse_reverse = (xmouse == OPT_ONPLUS);
-			break;
+		} else
+		{
+			opt_emouse(type, "-");
+			xmouse = 0;
 		}
-		break;
-	case QUERY:
+		if (type == INIT)
+			break;
+		/*FALLTHRU*/
+	case QUERY: /* odesc[] entries are NULL so we can do the QUERY here */
+		if (emouse == (EMOUSE_VSCROLL|EMOUSE_VDRAG|EMOUSE_LCLICK|EMOUSE_RCLICK))
+		{
+			if (mouse_reverse)
+				error(LM(Use_the_mouse_for_scrolling_vertically_reverse), NULL_PARG);
+			else
+				error(LM(Use_the_mouse_for_scrolling_vertically), NULL_PARG);
+		} else
+			opt_emouse(QUERY, NULL);
 		break;
 	}
 }
@@ -1053,6 +1067,7 @@ public void opt_mouse(int type, constant char *s)
 	/*ARGSUSED*/
 public void opt_wheel_lines(int type, constant char *s)
 {
+	(void)s;
 	switch (type)
 	{
 	case INIT:
@@ -1073,6 +1088,7 @@ public void opt_linenum_width(int type, constant char *s)
 {
 	PARG parg;
 
+	(void)s;
 	switch (type)
 	{
 	case INIT:
@@ -1097,6 +1113,7 @@ public void opt_status_col_width(int type, constant char *s)
 {
 	PARG parg;
 
+	(void)s;
 	switch (type)
 	{
 	case INIT:
@@ -1119,6 +1136,7 @@ public void opt_status_col_width(int type, constant char *s)
 	/*ARGSUSED*/
 public void opt_filesize(int type, constant char *s)
 {
+	(void)s;
 	switch (type)
 	{
 	case INIT:
@@ -1263,6 +1281,7 @@ public void opt_header(int type, constant char *s)
 	/*ARGSUSED*/
 public void opt_hilite_target(int type, constant char *s)
 {
+	(void)s;
 	switch (type)
 	{
 	case INIT:
@@ -1366,24 +1385,28 @@ static void do_nosearch_headers(int type, int no_header_lines, int no_header_col
 	/*ARGSUSED*/
 public void opt_nosearch_headers(int type, constant char *s)
 {
+	(void)s;
 	do_nosearch_headers(type, 1, 1);
 }
 
 	/*ARGSUSED*/
 public void opt_nosearch_header_lines(int type, constant char *s)
 {
+	(void)s;
 	do_nosearch_headers(type, 1, 0);
 }
 
 	/*ARGSUSED*/
 public void opt_nosearch_header_cols(int type, constant char *s)
 {
+	(void)s;
 	do_nosearch_headers(type, 0, 1);
 }
 
 	/*ARGSUSED*/
 public void opt_no_paste(int type, constant char *s)
 {
+	(void)s;
 	switch (type)
 	{
 	case TOGGLE:

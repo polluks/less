@@ -11,7 +11,7 @@
 
 ======================================================================
 
-	Major changes between "less" versions 705 and 707
+	Major changes between "less" versions 705 and 709
 
 * Add || command.
 
@@ -41,6 +41,8 @@
 * Fix issues on systems with volatile getenv return values.
 
 * Improve error handling for malformed binary lesskey file.
+
+* Improve messaging when using __mouse after --emouse (github #808).
 
 * Remove obsolete lesskey program.
 
