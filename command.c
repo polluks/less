@@ -335,7 +335,7 @@ static void exec_mca(void)
 		constant char *done_msg = (*cbuf == CONTROL('P')) ? NULL : "!done";
 		if (done_msg == NULL)
 			++cbuf;
-		if (*cbuf != '!')
+		if (strcmp(cbuf, "!") != 0)
 		{
 			if (shellcmd != NULL)
 				free(shellcmd);
@@ -343,9 +343,7 @@ static void exec_mca(void)
 		}
 		if (!secure_allow(SF_SHELL))
 			break;
-		if (shellcmd == NULL)
-			shellcmd = "";
-		lsystem(shellcmd, done_msg);
+		lsystem(shellcmd == NULL ? "" : shellcmd, done_msg);
 		break; }
 	case A_PSHELL: {
 		constant char *done_msg = (*cbuf == CONTROL('P')) ? NULL : "#done";
