@@ -1486,7 +1486,7 @@ static char * histfile_find(lbool must_exist)
 	name = dirfile(lgetenv("XDG_STATE_HOME"), &LESSHISTFILE[1], must_exist);
 	if (name == NULL)
 	{
-		char *dir = dirfile(home, ".local/state", 1);
+		char *dir = dirfile(home, ".local/state", TRUE);
 		if (dir != NULL)
 		{
 			name = dirfile(dir, &LESSHISTFILE[1], must_exist);
@@ -1611,7 +1611,7 @@ static void addhist_init(void *uparam, struct mlist *ml, constant char *string)
 {
 	(void) uparam;
 	if (ml != NULL)
-		cmd_addhist(ml, string, 0);
+		cmd_addhist(ml, string, FALSE);
 	else if (string != NULL)
 		restore_mark(string);
 }
