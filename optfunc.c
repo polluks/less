@@ -283,16 +283,11 @@ public void calc_shift_count(void)
 #if USERFILE
 public void opt_k(int type, constant char *s)
 {
-	PARG parg;
-
+	(void)s;
 	switch (type)
 	{
 	case INIT:
-		if (lesskey(s, FALSE))
-		{
-			parg.p_string = s;
-			error(LM(Cannot_use_lesskey_file_X), &parg);
-		}
+		error(LM(opt_k_not_supported), NULL_PARG);
 		break;
 	}
 }
@@ -353,6 +348,11 @@ public void opt_t(int type, constant char *s)
 	IFILE save_ifile;
 	POSITION pos;
 
+	if (!secure_allow(SF_TAGS))
+	{
+		error(LM(tags_support_is_not_available), NULL_PARG);
+		return;
+	}
 	switch (type)
 	{
 	case INIT:
@@ -360,11 +360,6 @@ public void opt_t(int type, constant char *s)
 		/* Do the rest in main() */
 		break;
 	case TOGGLE:
-		if (!secure_allow(SF_TAGS))
-		{
-			error(LM(tags_support_is_not_available), NULL_PARG);
-			break;
-		}
 		findtag(skipspc(s));
 		save_ifile = save_curr_ifile();
 		/*

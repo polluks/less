@@ -41,7 +41,6 @@ extern int sc_height;
 extern constant char *no_config;
 
 #if USERFILE
-/* "content" is lesskey source, never binary. */
 static void add_content_table(int (*call_lesskey)(constant char *, lbool), constant char *envname, lbool sysvar);
 static int add_hometable(int (*call_lesskey)(constant char *, lbool), constant char *envname, constant char *def_filename, lbool sysvar);
 #endif /* USERFILE */
@@ -217,6 +216,8 @@ static unsigned char cmdtable[] =
 	SK(SK_DELETE),0,                A_NOACTION,
 	SK(SK_CTL_DELETE),0,            A_NOACTION,
 	SK(SK_SHIFT_DELETE),0,          A_NOACTION,
+	SK(SK_CTL_INSERT),0,            A_NOACTION,
+	SK(SK_SHIFT_INSERT),0,          A_NOACTION,
 	SK(SK_INSERT),0,                A_NOACTION,
 	SK(SK_BACKTAB),0,               A_NOACTION,
 	SK(SK_BACKSPACE),0,             A_NOACTION,
@@ -304,6 +305,8 @@ static unsigned char edittable[] =
 	SK(SK_SHIFT_UP_ARROW),0,        A_NOACTION,
 	SK(SK_SHIFT_DOWN_ARROW),0,      A_NOACTION,
 	SK(SK_SHIFT_DELETE),0,          A_NOACTION,
+	SK(SK_SHIFT_INSERT),0,          A_NOACTION,
+	SK(SK_CTL_INSERT),0,            A_NOACTION,
 	SK(SK_PAGE_UP),0,               A_NOACTION,
 	SK(SK_PAGE_DOWN),0,             A_NOACTION,
 	SK(SK_SHIFT_LEFT_ARROW),0,      A_NOACTION,
@@ -539,41 +542,18 @@ public void init_cmds(void)
 	add_ecmd_table(edittable, sizeof(edittable));
 	add_sysvar_table(udflt_vartable, sizeof(dflt_vartable));
 #if USERFILE
-#ifdef BINDIR /* For backwards compatibility */
-	/* Try to add tables in the OLD system lesskey file. */
-	add_hometable(lesskey, NULL, BINDIR "/.sysless", TRUE);
-#endif
-	/*
-	 * Try to load lesskey source file or binary file.
-	 * If the source file succeeds, don't load binary file. 
-	 * The binary file is likely to have been generated from 
-	 * a (possibly out of date) copy of the src file, 
-	 * so loading it is at best redundant.
-	 */
 	/*
 	 * Try to add tables in system lesskey src file.
 	 */
 #if HAVE_LESSKEYSRC 
-	if (add_hometable(lesskey_src, "LESSKEYIN_SYSTEM", LESSKEYINFILE_SYS, TRUE) != 0)
+	add_hometable(lesskey_src, "LESSKEYIN_SYSTEM", LESSKEYINFILE_SYS, TRUE);
 #endif
-	{
-		/*
-		 * Try to add the tables in the system lesskey binary file.
-		 */
-		add_hometable(lesskey, "LESSKEY_SYSTEM", LESSKEYFILE_SYS, TRUE);
-	}
 	/*
 	 * Try to add tables in the lesskey src file "$HOME/.lesskey".
 	 */
 #if HAVE_LESSKEYSRC 
-	if (add_hometable(lesskey_src, "LESSKEYIN", DEF_LESSKEYINFILE, FALSE) != 0)
+	add_hometable(lesskey_src, "LESSKEYIN", DEF_LESSKEYINFILE, FALSE);
 #endif
-	{
-		/*
-		 * Try to add the tables in the standard lesskey binary file "$HOME/.less".
-		 */
-		add_hometable(lesskey, "LESSKEY", LESSKEYFILE, FALSE);
-	}
 	
 	add_content_table(lesskey_content, "LESSKEY_CONTENT_SYSTEM", TRUE);
 	add_content_table(lesskey_content, "LESSKEY_CONTENT", FALSE);
@@ -956,7 +936,7 @@ static int cmd_decode(struct tablelist *tlist, constant char *cmd, lbool anchore
 	int action = A_INVALID;
 	size_t match_len = 0;
 	constant unsigned char *table = NULL;
-	constant unsigned char *endtable;
+	constant unsigned char *endtable = NULL; /* Silence warning on older gcc versions */
 
 	if (extra != NULL)
 		*extra = NULL;
@@ -1263,145 +1243,6 @@ public lbool isnullenv(constant char *s)
 }
 
 #if USERFILE
-/*
- * Get an "integer" from a lesskey file.
- * Integers are stored in a funny format: 
- * two bytes, low order first, in radix KRADIX.
- */
-static size_t gint(unsigned char **sp)
-{
-	size_t n;
-
-	n = *(*sp)++;
-	n += *(*sp)++ * KRADIX;
-	return (n);
-}
-
-/* 
- * Process a new (post-v241) lesskey file.
- */
-static int new_lesskey(unsigned char *buf, size_t len, lbool sysvar)
-{
-	unsigned char *p;
-	unsigned char *end;
-	int c;
-	size_t n;
-
-	/*
-	 * New-style lesskey file.
-	 * Extract the pieces.
-	 */
-	if (buf[len-3] != C0_END_LESSKEY_MAGIC ||
-	    buf[len-2] != C1_END_LESSKEY_MAGIC ||
-	    buf[len-1] != C2_END_LESSKEY_MAGIC)
-		return (-1);
-	p = buf + 4;
-	end = buf + len;
-	for (;;)
-	{
-		c = *p++;
-		switch (c)
-		{
-		case CMD_SECTION:
-			n = gint(&p);
-			if (p+n >= end)
-				return (-1);
-			add_fcmd_table(p, n);
-			p += n;
-			break;
-		case EDIT_SECTION:
-			n = gint(&p);
-			if (p+n >= end)
-				return (-1);
-			add_ecmd_table(p, n);
-			p += n;
-			break;
-		case VAR_SECTION:
-			n = gint(&p);
-			if (p+n >= end)
-				return (-1);
-			if (sysvar)
-				add_sysvar_table(p, n);
-			else
-				add_uvar_table(p, n);
-			p += n;
-			break;
-		case END_SECTION:
-			return (0);
-		default:
-			/*
-			 * Unrecognized section type.
-			 */
-			return (-1);
-		}
-	}
-}
-
-/*
- * Set up a user command table, based on a "lesskey" file.
- */
-public int lesskey(constant char *filename, lbool sysvar)
-{
-	unsigned char *buf;
-	POSITION len;
-	ssize_t n;
-	int f;
-
-	if (!secure_allow(SF_LESSKEY) || !isnullenv(no_config))
-		return (1);
-	/*
-	 * Try to open the lesskey file.
-	 */
-	f = open(filename, OPEN_READ);
-	if (f < 0)
-		return (1);
-
-	/*
-	 * Read the file into a buffer.
-	 * We first figure out the size of the file and allocate space for it.
-	 * {{ Minimal error checking is done here.
-	 *    A garbage .less file will produce strange results.
-	 *    To avoid a large amount of error checking code here, we
-	 *    rely on the lesskey program to generate a good .less file. }}
-	 */
-	len = filesize(f);
-	if (len == NULL_POSITION || len < 3)
-	{
-		/*
-		 * Bad file (valid file must have at least 3 chars).
-		 */
-		close(f);
-		return (-1);
-	}
-	if ((buf = (unsigned char *) calloc((size_t)len, sizeof(char))) == NULL)
-	{
-		close(f);
-		return (-1);
-	}
-	if (less_lseek(f, (less_off_t)0, SEEK_SET) == BAD_LSEEK)
-	{
-		free(buf);
-		close(f);
-		return (-1);
-	}
-	n = read(f, buf, (size_t) len);
-	close(f);
-	if (n != len)
-	{
-		free(buf);
-		return (-1);
-	}
-
-	/*
-	 * Verify lesskey file header.
-	 */
-	if (len < 4 || 
-	    buf[0] != C0_LESSKEY_MAGIC || buf[1] != C1_LESSKEY_MAGIC ||
-	    buf[2] != C2_LESSKEY_MAGIC || buf[3] != C3_LESSKEY_MAGIC)
-		return (-1);
-	return (new_lesskey(buf, (size_t) len, sysvar));
-}
-
 #if HAVE_LESSKEYSRC 
 static int lesskey_text(constant char *filename, lbool sysvar, lbool content)
 {
@@ -1453,23 +1294,26 @@ static int add_hometable(int (*call_lesskey)(constant char *, lbool), constant c
 	if (is_lesstest()) /* Don't use lesskey files in lesstest */
 		return -1;
 #endif
-	if (envname != NULL && (efilename = lgetenv(envname)) != NULL)
+	if (envname != NULL && !isnullenv(efilename = lgetenv(envname)))
 		filename = save(efilename);
 	else if (sysvar) /* def_filename is full path */
 		filename = save(def_filename);
 	else /* def_filename is just basename */
 	{
-		/* Remove first char (normally a dot) unless stored in $HOME. */
 		constant char *xdg = lgetenv("XDG_CONFIG_HOME");
+		constant char *xdg_filename = def_filename;
+		/* Remove first char from xdg_filename if it is a dot or underscore. */
+		if (xdg_filename[0] == '.' || xdg_filename[0] == '_')
+			xdg_filename = &xdg_filename[1];
 		if (!isnullenv(xdg))
-			filename = dirfile(xdg, &def_filename[1], TRUE);
+			filename = dirfile(xdg, xdg_filename, TRUE);
 		if (filename == NULL)
 		{
 			constant char *home = lgetenv("HOME");
 			if (!isnullenv(home))
 			{
 				char *cfg_dir = dirfile(home, ".config", FALSE);
-				filename = dirfile(cfg_dir, &def_filename[1], TRUE);
+				filename = dirfile(cfg_dir, xdg_filename, TRUE);
 				free(cfg_dir);
 			}
 		}

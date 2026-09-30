@@ -181,7 +181,7 @@ static void win32_deinit_term();
 #define BG_COLORS       (BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY)
 #define MAKEATTR(fg,bg)         ((WORD)((fg)|((bg)<<4)))
 #define APPLY_COLORS()          { if (SetConsoleTextAttribute(con_out, curr_attr) == 0) \
-                                  error("SETCOLORS failed", NULL_PARG); }
+                                  error(LM(SETCOLORS_failed), NULL_PARG); }
 #define SET_FG_COLOR(fg)        { curr_attr &= ~0x0f; curr_attr |= (fg); APPLY_COLORS(); }
 #define SET_BG_COLOR(bg)        { curr_attr &= ~0xf0; curr_attr |= ((bg)<<4); APPLY_COLORS(); }
 #define SETCOLORS(fg,bg)        { curr_attr = MAKEATTR(fg,bg); APPLY_COLORS(); }
@@ -922,7 +922,7 @@ public void scrsize(void)
 #ifdef TIOCGWINSZ
 	{
 		struct winsize w;
-		if (ioctl(2, TIOCGWINSZ, &w) == 0 || ioctl(1, TIOCGWINSZ, &w) == 0)
+		if (ioctl(1, TIOCGWINSZ, &w) == 0 || ioctl(2, TIOCGWINSZ, &w) == 0)
 		{
 			if (w.ws_row > 0)
 				sys_height = w.ws_row;
@@ -934,7 +934,7 @@ public void scrsize(void)
 #ifdef WIOCGETD
 	{
 		struct uwdata w;
-		if (ioctl(2, WIOCGETD, &w) == 0 || ioctl(1, WIOCGETD, &w) == 0)
+		if (ioctl(1, WIOCGETD, &w) == 0 || ioctl(2, WIOCGETD, &w) == 0)
 		{
 			if (w.uw_height > 0)
 				sys_height = w.uw_height / w.uw_vs;
@@ -1050,6 +1050,12 @@ public constant char * special_key_str(int key)
 {
 	static char tbuf[40];
 	constant char *s;
+#if MSDOS_COMPILER
+	static char k_ctl_pageup[]      = { '\340', PCK_CTL_PAGEUP, 0 };
+	static char k_ctl_pagedown[]    = { '\340', PCK_CTL_PAGEDOWN, 0 };
+	static char k_shift_pageup[]    = { '\340', PCK_SHIFT_PAGEUP, 0 };
+	static char k_shift_pagedown[]  = { '\340', PCK_SHIFT_PAGEDOWN, 0 };
+#endif
 #if MSDOS_COMPILER || OS2
 	static char k_right[]           = { '\340', PCK_RIGHT, 0 };
 	static char k_left[]            = { '\340', PCK_LEFT, 0  };
@@ -1062,6 +1068,8 @@ public constant char * special_key_str(int key)
 	static char k_shift_up[]        = { '\340', PCK_SHIFT_UP, 0  };
 	static char k_shift_down[]      = { '\340', PCK_SHIFT_DOWN, 0  };
 	static char k_insert[]          = { '\340', PCK_INSERT, 0  };
+	static char k_ctl_insert[]      = { '\340', PCK_CTL_INSERT, 0  };
+	static char k_shift_insert[]    = { '\340', PCK_SHIFT_INSERT, 0  };
 	static char k_delete[]          = { '\340', PCK_DELETE, 0  };
 	static char k_ctl_delete[]      = { '\340', PCK_CTL_DELETE, 0  };
 	static char k_shift_delete[]    = { '\340', PCK_SHIFT_DELETE, 0  };
@@ -1073,11 +1081,7 @@ public constant char * special_key_str(int key)
 	static char k_down[]            = { '\340', PCK_DOWN, 0 };
 	static char k_backtab[]         = { '\340', PCK_SHIFT_TAB, 0 };
 	static char k_pagedown[]        = { '\340', PCK_PAGEDOWN, 0 };
-	static char k_shift_pagedown[]  = { '\340', PCK_SHIFT_PAGEDOWN, 0 };
-	static char k_ctl_pagedown[]    = { '\340', PCK_CTL_PAGEDOWN, 0 };
 	static char k_pageup[]          = { '\340', PCK_PAGEUP, 0 };
-	static char k_shift_pageup[]    = { '\340', PCK_SHIFT_PAGEUP, 0 };
-	static char k_ctl_pageup[]      = { '\340', PCK_CTL_PAGEUP, 0 };
 	static char k_ctl_home[]        = { '\340', PCK_CTL_HOME, 0 };
 	static char k_ctl_end[]         = { '\340', PCK_CTL_END, 0 };
 	static char k_shift_home[]      = { '\340', PCK_SHIFT_HOME, 0 };
@@ -1169,6 +1173,9 @@ public constant char * special_key_str(int key)
 	case SK_END:
 		s = k_end;
 		break;
+	case SK_F1:
+		s = k_f1;
+		break;
 	case SK_DELETE:
 		s = k_delete;
 		break;
@@ -1210,11 +1217,14 @@ public constant char * special_key_str(int key)
 	case SK_SHIFT_DELETE:
 		s = k_shift_delete;
 		break;
+	case SK_CTL_INSERT:
+		s = k_ctl_insert;
+		break;
+	case SK_SHIFT_INSERT:
+		s = k_shift_insert;
+		break;
 	case SK_BACKSPACE:
 		s = k_backspace;
-		break;
-	case SK_F1:
-		s = k_f1;
 		break;
 	case SK_BACKTAB:
 		s = k_backtab;
@@ -1282,6 +1292,12 @@ public constant char * special_key_str(int key)
 		break;
 	case SK_INSERT:
 		s = ltgetstr("kich1", "kI", &sp);
+		break;
+	case SK_SHIFT_INSERT:
+		s = ltgetstr("kIC", "#3", &sp);
+		break;
+	case SK_CTL_INSERT:
+		s = ltgetstr("kIC5", NULL, &sp);
 		break;
 	case SK_BACKTAB:
 		s = ltgetstr("kcbt", "kB", &sp);
@@ -2173,7 +2189,7 @@ public void term_deinit(void)
 	}
 #else
 	/* Need clreol to make SETCOLORS take effect. */
-	clreol();
+	clear_eol();
 #endif
 #endif
 	term_init_done = FALSE;
@@ -3422,6 +3438,7 @@ static lbool win32_scan_code(XINPUT_RECORD *xip)
 		case PCK_UP:     scan = PCK_CTL_UP;     break;
 		case PCK_DOWN:   scan = PCK_CTL_DOWN;   break;
 		case PCK_DELETE: scan = PCK_CTL_DELETE; break;
+		case PCK_INSERT: scan = PCK_CTL_INSERT; break;
 		case PCK_HOME:   scan = PCK_CTL_HOME;   break;
 		case PCK_END:    scan = PCK_CTL_END;    break;
 		case PCK_PAGEUP: scan = PCK_CTL_PAGEUP; break;
@@ -3440,6 +3457,7 @@ static lbool win32_scan_code(XINPUT_RECORD *xip)
 				case PCK_UP:     scan = PCK_SHIFT_UP;     break;
 				case PCK_DOWN:   scan = PCK_SHIFT_DOWN;   break;
 				case PCK_DELETE: scan = PCK_SHIFT_DELETE; break;
+				case PCK_INSERT: scan = PCK_SHIFT_INSERT; break;
 				case PCK_HOME:   scan = PCK_SHIFT_HOME;   break;
 				case PCK_END:    scan = PCK_SHIFT_END;    break;
 				case PCK_PAGEUP: scan = PCK_SHIFT_PAGEUP; break;

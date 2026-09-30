@@ -287,6 +287,7 @@ static constant char * tstr(char **pp, int xlate)
 					case 'D': ch = SK_CTL_PAGE_DOWN; break;
 					case 'e': ch = SK_CTL_END; break;
 					case 'h': ch = SK_CTL_HOME; break;
+					case 'i': ch = SK_CTL_INSERT; break;
 					case 'l': ch = SK_CTL_LEFT_ARROW; break;
 					case 'r': ch = SK_CTL_RIGHT_ARROW; break;
 					case 'u': ch = SK_CTL_UP_ARROW; break;
@@ -301,6 +302,7 @@ static constant char * tstr(char **pp, int xlate)
 					case 'D': ch = SK_SHIFT_PAGE_DOWN; break;
 					case 'e': ch = SK_SHIFT_END; break;
 					case 'h': ch = SK_SHIFT_HOME; break;
+					case 'i': ch = SK_SHIFT_INSERT; break;
 					case 'l': ch = SK_SHIFT_LEFT_ARROW; break;
 					case 'r': ch = SK_SHIFT_RIGHT_ARROW; break;
 					case 'u': ch = SK_SHIFT_UP_ARROW; break;
@@ -368,7 +370,7 @@ static constant char * tstr(char **pp, int xlate)
 		 * Caret means CONTROL.
 		 */
 		*pp = increment_pointer(p+1);
-		char_string(buf, CONTROL(p[1]), 1);
+		char_string(buf, (char) CONTROL(p[1]), 1);
 		if (xlate && buf[0] == CONTROL('K'))
 			return tstr_control_k;
 		return (buf);
