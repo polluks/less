@@ -24,6 +24,7 @@ extern int hshift;
 extern int quit_if_one_screen;
 extern int status_col;
 extern int wordwrap;
+extern POSITION last_search_pos;
 extern POSITION start_attnpos;
 extern POSITION end_attnpos;
 #if HILITE_SEARCH
@@ -64,7 +65,8 @@ static void init_status_col(POSITION base_pos, POSITION disp_pos, POSITION edisp
 	} else if (disp_pos != NULL_POSITION)
 	{
 		attr = is_hilited_attr(disp_pos, edisp_pos, TRUE, NULL);
-		ch = '*';
+		ch = (last_search_pos != NULL_POSITION &&
+			last_search_pos >= base_pos && last_search_pos < eol_pos) ? '@' : '*';
 	} else
 	{
 		attr = 0;
@@ -146,13 +148,13 @@ get_forw_line:
 	if (is_line_contig_pos(curr_pos))
 	{
 		prewind(TRUE);
-		plinestart(base_pos, curr_pos);
+		plinestart(curr_pos);
 		ch_seek(curr_pos);
 		new_pos = curr_pos;
 	} else
 	{
 		prewind(FALSE);
-		plinestart(base_pos, curr_pos);
+		plinestart(curr_pos);
 		ch_seek(base_pos);
 		new_pos = base_pos;
 		while (new_pos < curr_pos)
@@ -461,9 +463,9 @@ get_back_line:
 		return (NULL_POSITION);
 	}
 	endline = FALSE;
-    loop:
 	prewind(FALSE);
-	plinestart(new_pos, new_pos);
+    loop:
+	plinestart(new_pos);
 	wrap_pos = NULL_POSITION;
 	skipped_leading = FALSE;
 	begin_new_pos = new_pos;

@@ -15,6 +15,7 @@ extern IFILE curr_ifile;
 extern int sc_height;
 extern int jump_sline;
 extern int perma_marks;
+extern POSITION last_search_pos;
 
 /*
  * A mark is an ifile (input file) plus a position within the file.
@@ -152,6 +153,13 @@ static struct mark * getumark(char c)
 	return &marks[index];
 }
 
+static struct mark* get_where_mark(struct mark *m, int where)
+{
+	get_scrpos(&m->m_scrpos, where);
+	cmark(m, curr_ifile, m->m_scrpos.pos, m->m_scrpos.ln);
+	return m;
+}
+
 /*
  * Get the mark structure identified by a character.
  * The mark struct may either be in the mark table (user mark)
@@ -194,17 +202,37 @@ static struct mark * getmark(char c)
 		/*
 		 * Top line on screen.
 		 */
-		m = &sm;
-		get_scrpos(&m->m_scrpos, TOP);
-		cmark(m, curr_ifile, m->m_scrpos.pos, m->m_scrpos.ln);
+		m = get_where_mark(&sm, TOP);
 		break;
 	case ';':
 		/*
 		 * Bottom line on screen.
 		 */
+		m = get_where_mark(&sm, BOTTOM);
+		break;
+	case ',':
+		/*
+		 * Middle line on screen.
+		 */
+		m = get_where_mark(&sm, MIDDLE);
+		break;
+	case '_':
+		/*
+		 * Jump target line.
+		 */
+		m = get_where_mark(&sm, jump_sline);
+		break;
+	case '@':
+		/*
+		 * Last search match.
+		 */
+		if (last_search_pos == NULL_POSITION)
+		{
+			error(LM(No_previous_search_match), NULL_PARG);
+			return (NULL);
+		}
 		m = &sm;
-		get_scrpos(&m->m_scrpos, BOTTOM);
-		cmark(m, curr_ifile, m->m_scrpos.pos, m->m_scrpos.ln);
+		cmark(m, curr_ifile, last_search_pos, jump_sline);
 		break;
 	case '\'':
 		/*

@@ -680,7 +680,8 @@ of the current screen, inclusive.
 Otherwise (if the marked line is the top line of the current screen
 or after it) the section of the file to be piped is between the top line
 of the current screen and the marked line, inclusive.
-<m> may also be "\*^" or "$" to indicate beginning or end of file respectively.
+<m> may also be "\*^" or "$" to indicate beginning or end of file respectively,
+or "@" to indicate the line containing the last search match.
 If <m> is "\&.\&" or newline, the currently displayed screen is piped.
 You can type \*^N in place of <m> in order to enter
 a line number instead of a mark letter.
@@ -692,8 +693,13 @@ The section of the file to be piped is between the two lines marked
 with <m1> and <m2>, inclusive.
 The line marked by <m1> may be either before or after the line marked by <m2> in the file.
 Either mark may be "\*^" or "$" to indicate beginning or end of file respectively.
-":" or newline indicates the first line displayed on the screen,
-and ";" indicates the last line displayed on the screen.
+Also, ":" or newline indicates the first line displayed on the screen,
+";" indicates the last line displayed on the screen,
+"," indicates the middle line displayed on the screen,
+"_" indicates the target line (as specified by the
+.B "\-j"
+option), and
+"@" indicates the line containing the last search match.
 You can type \*^N in place of either <m1> or <m2> in order to enter
 a line number instead of a mark letter.
 .IP "s \fIfilename\fP"
@@ -840,6 +846,10 @@ If an option appears in the LESS variable, it can be reset
 to its default value on the command line by beginning the command
 line option with
 .RB "\[dq]" "\-+" "\[dq]."
+Similarly, if a long option name appears in the LESS variable, it can be reset
+to its default value on the command line by beginning the command
+line option with
+.RB "\[dq]" "\-\-+" "\[dq]."
 .PP
 Some options like
 .B "\-D"
@@ -884,7 +894,7 @@ the bottom of the screen
 and backward searches to start at the top of the screen,
 thus skipping all lines displayed on the screen.
 .IP "\fB\-A\fP or \fB\-\-SEARCH\-SKIP\-SCREEN\fP"
-auses all forward searches (not just non-repeated searches)
+Causes all forward searches (not just non-repeated searches)
 to start just after the target line, and all backward searches
 to start just before the target line.
 Thus, forward searches will skip part of the displayed screen
@@ -1255,6 +1265,9 @@ and there are matches beyond both sides of the screen.
 .IP "*"
 There are matches in the visible part of the line
 but none to the right or left of it.
+.IP "@"
+There are matches in the visible part of the line,
+and this is the line that was moved to the target line in the last search.
 .IP "a-z, A-Z"
 The line has been marked with the corresponding letter via the m or M command.
 .IP "#"
@@ -1482,6 +1495,12 @@ sequences are output in "raw" form.
 Unlike
 .BR "\-r" ","
 the screen appearance is maintained correctly.
+In
+.B less
+version 712 and later, this is the default behavior.
+It can be disabled with
+.BR "\-+R" "."
+.IP
 The sequences which are output raw are:
 .IP
 1. ANSI SGR ("color") sequences
@@ -1723,6 +1742,7 @@ of the screen, starting with a decimal point: \&.5 is half of the
 screen width, \&.3 is three tenths of the screen width, and so on.
 If the number is specified as a fraction, the actual number of
 scroll positions is recalculated if the terminal window is resized.
+The default is half of the screen width.
 .IP "\fB\-\-autosave=\fP\fIactions\fP
 Normally, the history file is saved only when
 .B less
@@ -1849,6 +1869,9 @@ With this option enabled, the = command and the long prompt will display
 the number of lines in the file.
 Normally this is not done, because it can be slow if the input file 
 is large and non-seekable (such as a pipe).
+See also the
+.B "\-\-time\-file\-size"
+option.
 .IP "\fB\-\-follow\-name\fP"
 Normally, if the input file is renamed while an F command is executing,
 .B less
@@ -2161,6 +2184,15 @@ the entire line highlighted.
 If
 .B "\-\-use\-color"
 is set, the line is colored rather than highlighted.
+.IP "\fB\-\-time\-file\-size=\fP\fIms\fP"
+When the
+.B "\-\-file\-size"
+option is given, don't spend more than \fIms\fP milliseconds
+finding the file size.
+A value of zero (the default) means that no time limit is specified.
+Has no effect unless the
+.B "\-\-file\-size"
+option is also specified.
 .IP "\fB\-\-use\-backslash\fP"
 This option changes the interpretations of options which follow this one.
 After the
@@ -3198,6 +3230,23 @@ file.
 Name of the default system-wide
 .I "lesskey source"
 file.
+.IP LESSKEY_CONTENT
+Text which is interpreted as if it were the contents of a
+.BR lesskey (5)
+file.
+This is similar to passing the text to a
+.B "\-\-lesskey\-content"
+option, although there are no restrictions on which environment variables
+may be set in the text, as there are when using
+.BR "\-\-lesskey\-content" "."
+.IP LESSKEY_CONTENT_SYSTEM
+Same as LESSKEY_CONTENT, except the
+content is treated as if it were contained in a system-wide
+.B lesskey
+file; thus, any settings in this content are overridden by
+conflicting settings in a local lesskey file, in a
+.BR "\-\-lesskey\-content"
+parameter, or in the LESSKEY_CONTENT environment variable.
 .IP LESSMETACHARS
 List of characters which are considered "metacharacters" by the shell.
 .IP LESSMETAESCAPE
