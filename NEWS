@@ -16,9 +16,11 @@
 * The binary lesskey file format produced by lesskey(1) is
   no longer supported.
 
+* Enable -R by default (github #839).
+
 * Add --time-file-size option (github #815).
 
-* Enable -R by default (github #839).
+* Add --no-underline-header option (github #841).
 
 * Implement INSERT mode on command line.
 
@@ -38,11 +40,11 @@
 * Make | command print done message before restoring alternate screen,
   so any output from the piped command can be seen.
 
-* Improve build for MS-DOS.
+* Improve build for MS-DOS (github #823).
 
-* Improve build for OS/2 with EMX.
+* Improve build for OS/2 with EMX (github #824).
 
-* Support build for OS/2 with kLIBC.
+* Support build for OS/2 with kLIBC (github #826).
 
 * Fix incorrect name of default lesskey file on OS/2 (github #819).
 
@@ -53,6 +55,9 @@
 * Fix bug when running less with stderr redirected (github #360).
 
 * Fix bug displaying wrapped colored text (github #835).
+
+* Prevent queued tty input (mouse reports etc) from leaking out to the shell
+  after less exits (github #825).
 
 ======================================================================
 
